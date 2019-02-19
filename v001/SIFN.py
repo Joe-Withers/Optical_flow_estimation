@@ -58,8 +58,6 @@ def smoothness_error(f_pred):
 
     gx = tf.expand_dims(tf.expand_dims([[-1.0, 1.0],[-1.0, 1.0]], axis=-1),axis=-1)
     gy = tf.expand_dims(tf.expand_dims([[-1.0, -1.0],[1.0, 1.0]], axis=-1),axis=-1)
-    print(gx.shape)
-    print('aaaabbba')
 
     Ux = tf.nn.conv2d(U, gx, [1,1,1,1], "SAME")
     Uy = tf.nn.conv2d(U, gy, [1,1,1,1], "SAME")

@@ -116,12 +116,11 @@ def FLowNetSimple(data):
 
 class SIFN():
 
-    def __init__(self, load_model_path = 'ignore', save_model_path = 'ignore'):
-        self.load_model_path = load_model_path
-        self.save_model_path = save_model_path
+    def __init__(self):
+        pass
 
     def train_network(self, train_x, train_y, t = 1, hm_epochs = 100000, epsilon = 0.005, lambda1 = 0.00000005, batch_size = 16,
-    save_flow_im_path = 'ignore', save_step = 100, show_step=100, bool_show_stuff = False):
+    save_flow_im_path = 'ignore', save_step = 100, show_step=100, bool_show_stuff = False, load_model_path = 'ignore', save_model_path = 'ignore'):
         [_, width_of_image, height_of_image, n_x] = train_x.shape
         [_, width_of_image, height_of_image, n_y] = train_y.shape
         #placeholders
@@ -172,9 +171,9 @@ class SIFN():
             # saver object to save the variables
             saver = tf.train.Saver(max_to_keep=2)
             #load model from latest checkpoint
-            if (self.load_model_path != 'ignore'):
-                saver.restore(sess, tf.train.latest_checkpoint(self.load_model_path))
-                print('model loaded from:', self.load_model_path)
+            if (load_model_path != 'ignore'):
+                saver.restore(sess, tf.train.latest_checkpoint(load_model_path))
+                print('model loaded from:', load_model_path)
 
             #training
             for epoch in range(hm_epochs):
@@ -206,50 +205,20 @@ class SIFN():
                     show_stuff(batch_x, batch_y, prd_flow, wrp_im)
 
                 #save model
-                if (self.save_model_path != 'ignore'):
+                if (save_model_path != 'ignore'):
                     if(((epoch) % save_step) == 0):
-                        saver.save(sess, self.save_model_path+'f_model', global_step=global_step)
-                        print('model saved in:', self.save_model_path)
+                        saver.save(sess, save_model_path+'f_model', global_step=global_step)
+                        print('model saved in:', save_model_path)
 
-    def test_network(self, train_x, train_y, t = 1, hm_epochs = 100000, epsilon = 0.005, lambda1 = 0.00000005, batch_size = 16,
-    save_flow_im_path = 'ignore', save_step = 100, show_step=100, bool_show_stuff = False):
-        [_, width_of_image, height_of_image, n_x] = train_x.shape
-        [_, width_of_image, height_of_image, n_y] = train_y.shape
+    def run_network(self, test_x, load_model_path, batch_size = 32, save_flow_im_path = 'ignore'):
+        [n_ims, width_of_image, height_of_image, n_x] = test_x.shape
         #placeholders
         x = tf.placeholder('float', [None, width_of_image, height_of_image, n_x])
-        y = tf.placeholder('float', [None, width_of_image, height_of_image, n_y])
         global_step = tf.Variable(0, name='global_step', trainable=False)
         #estimate flow
         (flow1, flow2, flow3, flow4, flow5, flow6) = FLowNetSimple(x)
-        #calculate error
-        w_err1, p_im1 = warping_error(x[:,:,:,0], y[:,:,:,0], flow1, t)
-        w_err2, p_im2 = warping_error(x[:,:,:,0], y[:,:,:,0], flow2, t)
-        w_err3, p_im3 = warping_error(x[:,:,:,0], y[:,:,:,0], flow3, t)
-        w_err4, p_im4 = warping_error(x[:,:,:,0], y[:,:,:,0], flow4, t)
-        w_err5, p_im5 = warping_error(x[:,:,:,0], y[:,:,:,0], flow5, t)
-        w_err6, p_im6 = warping_error(x[:,:,:,0], y[:,:,:,0], flow6, t)
-        p_flow = flow1
-        p_image = p_im1
-        weight = [1/2,      1/4,        1/8,        1/16,       1/32,       1/32]
-        w_errs = [w_err1,   w_err2,     w_err3,     w_err4,     w_err5,     w_err6]
-        w_err = tf.reduce_sum(tf.multiply(weight,w_errs))
-        charbonnier_loss = tf.sqrt(tf.square(w_err) + tf.square(epsilon))
-        #calculate smoothness error
-        s_err1 = smoothness_error(flow1)
-        s_err2 = smoothness_error(flow2)
-        s_err3 = smoothness_error(flow3)
-        s_err4 = smoothness_error(flow4)
-        s_err5 = smoothness_error(flow5)
-        s_err6 = smoothness_error(flow6)
-        s_errs = [s_err1,   s_err2,     s_err3,     s_err4,     s_err5,     s_err6]
-        s_err = tf.reduce_sum(tf.multiply(weight,s_errs))
+        p_flow = tf.image.resize_images(flow1, [width_of_image, height_of_image])
 
-        cost = tf.add(charbonnier_loss, lambda1*s_err)
-        tf.summary.scalar("cost", cost)
-
-        writer = tf.summary.FileWriter("/test/cost")
-        summaries = tf.summary.merge_all()
-        #run on GPU
         config = tf.ConfigProto(
             device_count = {'GPU': 1}
         )
@@ -259,37 +228,32 @@ class SIFN():
             sess.run(tf.global_variables_initializer())
 
             # saver object to save the variables
-            saver = tf.train.Saver(max_to_keep=2)
+            saver = tf.train.Saver()
             #load model from latest checkpoint
-            if (self.load_model_path != 'ignore'):
-                saver.restore(sess, tf.train.latest_checkpoint(self.load_model_path))
-                print('model loaded from:', self.load_model_path)
+            saver.restore(sess, tf.train.latest_checkpoint(load_model_path))
+            print('model loaded from:', load_model_path)
 
-            #training
-            for epoch in range(hm_epochs):
-                epoch_loss = 0
-                i = 0
-                start_t_epoch = time.time()
-                while (i < len(train_x)) & (i < len(train_y)):
-                    start = i
-                    end = i+batch_size
-                    start_t_batch = time.time()
-                    batch_x = np.array(train_x[start:end])
-                    batch_y = np.array(train_y[start:end])
-                    c, prd_flow, wrp_im, g_s, summ = sess.run([cost, p_flow, p_image, global_step, summaries],
-                    feed_dict = {x: batch_x, y: batch_y})
-                    end_t_batch = time.time()
-                    writer.add_summary(summ, global_step=g_s)
-                    print('time for batch:',end_t_batch - start_t_batch)
-                    epoch_loss += c
-                    i += batch_size
+            start_t_all = time.time()
+            #running
+            i = 0
+            while i < len(test_x):
+                start = i
+                end = i+batch_size
+                start_t_batch = time.time()
+                batch_x = np.array(test_x[start:end])
+                prd_flow, g_s = sess.run([p_flow, global_step],
+                feed_dict = {x: batch_x})
+                end_t_batch = time.time()
+                i += batch_size
 
-                    if(((epoch) % save_step) == 0) and (save_flow_im_path != 'ignore'):
-                        save_flows(prd_flow, save_flow_im_path, start, g_s)
+                if start == 0:
+                    flows = prd_flow
+                else:
+                    flows = np.concatenate((flows, prd_flow), axis=0)
 
-                end_t_epoch = time.time()
-                print('Global Step:', g_s, 'Epoch:', epoch, '/', hm_epochs,
-                'loss:', epoch_loss, 'time:', end_t_epoch - start_t_epoch)
+            end_t_all = time.time()
+            if(save_flow_im_path != 'ignore'):
+                save_flows(flows, save_flow_im_path, 0, g_s)
+            print('Time:', end_t_all - start_t_all, '\nAvg time per image pair:', (end_t_all - start_t_all)/n_ims)
 
-                if(((epoch) % show_step) == 0) and bool_show_stuff:
-                    show_stuff(batch_x, batch_y, prd_flow, wrp_im)
+            return flows

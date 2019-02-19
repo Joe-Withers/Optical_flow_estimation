@@ -5,7 +5,7 @@ from SIFN_102.SIFN import SIFN
 n_data = 100
 im_width = 128
 im_height = 128
-im_path = './data/SyntheticData-b_plain-o_textured-dof_2/test/images/'
+im_path = './data/SyntheticData-b_plain-o_textured-dof_2/train/images/'
 #load data
 X, y = ds.load_my_synthetic(im_path, im_width=im_width, im_height=im_height, n_data=n_data)
 

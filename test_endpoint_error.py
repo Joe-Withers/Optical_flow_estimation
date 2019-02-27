@@ -27,9 +27,7 @@ predicted_flows = flow_estimator.run_network(X, load_model_path, batch_size=batc
 GT_flows = ds.load_my_synthetic_flows(im_path, n_data=n_data)
 
 assert len(GT_flows)==len(predicted_flows)
-EE = []
-for i in range(len(predicted_flows)):
-    EE.append(np.mean(np.sqrt(GT_flows[i,:,:,:]**2+predicted_flows[i,:,:,:]**2)))
-    print(EE[i])
+EE = [np.mean(np.sqrt(GT_flows[i,:,:,:]**2+predicted_flows[i,:,:,:]**2)) for i in range(len(predicted_flows))]
 
-print('Average endpoint error',np.mean(EE))
+
+print('Avg endpoint error',np.mean(EE))

@@ -1,5 +1,4 @@
 import datasets as ds
-import cv2
 import numpy as np
 from v001.SIFN import SIFN
 version = 'v001'

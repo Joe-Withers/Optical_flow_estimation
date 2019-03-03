@@ -31,7 +31,7 @@ def load_my_synthetic_flows(im_path, im_width=128, im_height=128, n_data=100):
 
     return flows
 
-def load_synthetic_chairs(im_path, im_width=128, im_height=128, n_data=100):
+def load_synthetic_chairs_images(im_path, im_width=128, im_height=128, n_data=100):
     train_x = np.zeros((n_data, im_width, im_height, 2))
     train_y = np.zeros((n_data, im_width, im_height, 1))
     for i in range(0,n_data):
@@ -48,3 +48,11 @@ def load_synthetic_chairs(im_path, im_width=128, im_height=128, n_data=100):
         y[i,:,:,0] = im2
 
     return X, y
+
+def load_synthetic_chairs_flows(im_path, im_width=128, im_height=128, n_data=100):
+    flows = np.zeros((n_data, im_width, im_height, 2))
+    for i in range(0,n_data):
+        f_flow = im_path+'flow/'+str(i)+'-I1-I2.npy'
+        flows[i,:,:,:] = np.load(f_flow)
+
+    return flows

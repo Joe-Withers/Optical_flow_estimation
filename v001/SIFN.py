@@ -150,8 +150,6 @@ class SIFN():
         iterator = self._dataset_pipeline(im1_filenames, im2_filenames, batch_size, im_width=im_width, im_height=im_height)
         im1, im2, y = iterator.get_next()
         x = tf.concat((im1,im2), axis=3)
-        print(x.shape)
-        print(y.shape)
         global_step = tf.Variable(0, name='global_step', trainable=False)
         #estimate flow
         (flow1, flow2, flow3, flow4, flow5, flow6) = FLowNetSimple(x)
@@ -162,8 +160,8 @@ class SIFN():
         w_err4, p_im4 = warping_error(x[:,:,:,0], y[:,:,:,0], flow4, t)
         w_err5, p_im5 = warping_error(x[:,:,:,0], y[:,:,:,0], flow5, t)
         w_err6, p_im6 = warping_error(x[:,:,:,0], y[:,:,:,0], flow6, t)
-        p_flow = flow1
-        p_image = p_im1
+        p_flow = tf.image.resize_images(flow1, [im_width, im_height])
+        p_image = tf.image.resize_images(p_im1, [im_width, im_height])
         weight = [1/2,      1/4,        1/8,        1/16,       1/32,       1/32]
         w_errs = [w_err1,   w_err2,     w_err3,     w_err4,     w_err5,     w_err6]
         w_err = tf.reduce_sum(tf.multiply(weight,w_errs))
@@ -238,14 +236,15 @@ class SIFN():
                         saver.save(sess, save_model_path+'f_model', global_step=global_step)
                         print('model saved in:', save_model_path)
 
-    def run_network(self, test_x, load_model_path, batch_size = 32, save_flow_im_path = 'ignore'):
-        [n_ims, width_of_image, height_of_image, n_x] = test_x.shape
+    def run_network(self, im1_filenames, im2_filenames, im_width, im_height, load_model_path, batch_size = 32, save_flow_im_path = 'ignore'):
         #placeholders
-        x = tf.placeholder('float', [None, width_of_image, height_of_image, n_x])
+        iterator = self._dataset_pipeline(im1_filenames, im2_filenames, batch_size, im_width=im_width, im_height=im_height)
+        im1, im2, y = iterator.get_next()
+        x = tf.concat((im1,im2), axis=3)
         global_step = tf.Variable(0, name='global_step', trainable=False)
         #estimate flow
         (flow1, flow2, flow3, flow4, flow5, flow6) = FLowNetSimple(x)
-        p_flow = tf.image.resize_images(flow1, [width_of_image, height_of_image])
+        p_flow = tf.image.resize_images(flow1, [im_width, im_height])
 
         config = tf.ConfigProto(
             device_count = {'GPU': 1}
@@ -261,27 +260,30 @@ class SIFN():
             saver.restore(sess, tf.train.latest_checkpoint(load_model_path))
             print('model loaded from:', load_model_path)
 
+            first_batch = True
             start_t_all = time.time()
+            sess.run(iterator.initializer)
             #running
-            i = 0
-            while i < len(test_x):
-                start = i
-                end = i+batch_size
-                start_t_batch = time.time()
-                batch_x = np.array(test_x[start:end])
-                prd_flow, g_s = sess.run([p_flow, global_step],
-                feed_dict = {x: batch_x})
-                end_t_batch = time.time()
-                i += batch_size
+            flows = []
+            while True:
+                try:
+                    start_t_batch = time.time()
+                    prd_flow, g_s = sess.run([p_flow, global_step])
+                    end_t_batch = time.time()
 
-                if start == 0:
-                    flows = prd_flow
-                else:
-                    flows = np.concatenate((flows, prd_flow), axis=0)
+                    if(save_flow_im_path != 'ignore'):
+                        self.save_flows(prd_flow, save_flow_im_path, first_batch, g_s)
+
+                    if first_batch:
+                        flows = prd_flow
+                    else:
+                        flows = np.concatenate((flows, prd_flow), axis=0)
+                    first_batch = False
+                except tf.errors.OutOfRangeError:
+                    print('End of Epoch')
+                    break
 
             end_t_all = time.time()
-            if(save_flow_im_path != 'ignore'):
-                save_flows(flows, save_flow_im_path, 0, g_s)
-            print('Time:', end_t_all - start_t_all, '\nAvg time per image pair:', (end_t_all - start_t_all)/n_ims)
+            print('Time:', end_t_all - start_t_all, '\nAvg time per image pair:', (end_t_all - start_t_all)/len(flows))
 
             return flows

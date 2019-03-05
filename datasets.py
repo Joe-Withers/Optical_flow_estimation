@@ -23,6 +23,13 @@ def load_my_synthetic_images(im_path, im_width=128, im_height=128, n_data=100):
 
     return X, y
 
+def load_my_synthetic_image_filenames(im_path, n_data=100):
+    f_im1s = [im_path+'images/'+str(i)+'-I1.png' for i in range(0,n_data)]
+    f_im2s = [im_path+'images/'+str(i)+'-I2.png' for i in range(0,n_data)]
+    f_ys = [im_path+'images/'+str(i)+'-I2.png' for i in range(0,n_data)]
+
+    return f_im1s, f_im2s, f_ys
+
 def load_my_synthetic_flows(im_path, im_width=128, im_height=128, n_data=100):
     flows = np.zeros((n_data, im_width, im_height, 2))
     for i in range(0,n_data):
@@ -32,13 +39,12 @@ def load_my_synthetic_flows(im_path, im_width=128, im_height=128, n_data=100):
     return flows
 
 def load_synthetic_chairs_images(im_path, im_width=128, im_height=128, n_data=100):
-    train_x = np.zeros((n_data, im_width, im_height, 2))
-    train_y = np.zeros((n_data, im_width, im_height, 1))
+    X = np.zeros((n_data, im_width, im_height, 2))
+    y = np.zeros((n_data, im_width, im_height, 1))
     for i in range(0,n_data):
         f_im1 = im_path+('0'*(7-len(str(i))))+str(i)+'-img_0.png'
         f_im2 = im_path+('0'*(7-len(str(i))))+str(i)+'-img_1.png'
         f_im3 = im_path+('0'*(7-len(str(i))))+str(i)+'-img_1.png'
-
         im1 = normalise_image(cv2.resize(cv2.imread(f_im1,0),(im_width, im_height)))
         im2 = normalise_image(cv2.resize(cv2.imread(f_im2,0),(im_width, im_height)))
         im3 = normalise_image(cv2.resize(cv2.imread(f_im3,0),(im_width, im_height)))
@@ -48,6 +54,13 @@ def load_synthetic_chairs_images(im_path, im_width=128, im_height=128, n_data=10
         y[i,:,:,0] = im2
 
     return X, y
+
+def load_synthetic_chairs_image_filenames(im_path, n_data=100):
+    f_im1s = [im_path+('0'*(7-len(str(i))))+str(i)+'-img_0.png' for i in range(0,n_data)]
+    f_im2s = [im_path+('0'*(7-len(str(i))))+str(i)+'-img_1.png' for i in range(0,n_data)]
+    f_ys = [im_path+('0'*(7-len(str(i))))+str(i)+'-img_1.png' for i in range(0,n_data)]
+
+    return f_im1s, f_im2s, f_ys
 
 def load_synthetic_chairs_flows(im_path, im_width=128, im_height=128, n_data=100):
     flows = np.zeros((n_data, im_width, im_height, 2))

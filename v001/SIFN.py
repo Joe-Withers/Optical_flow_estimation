@@ -8,25 +8,19 @@ import tensorflow.contrib.slim as slim
 
 def show_stuff(batch_x, batch_y, prd_flow, wrp_im):
     cv2.destroyAllWindows()
-    pred_im = np.array(wrp_im[-1,:,:])
-    orig_im = np.array(batch_x[-1,:,:,:])
-    label_im = np.array(batch_y[-1,:,:,:])
-    flow_im = visualise_flow(prd_flow[-1,:,:,:])
+    pred_im = np.array(wrp_im[0,:,:])
+    orig_im = np.array(batch_x[0,:,:,:])
+    label_im = np.array(batch_y[0,:,:,:])
+    flow_im = visualise_flow(prd_flow[0,:,:,:])
     cv2.imshow( "original im1", cv2.resize(orig_im[:,:,0],(300,300), interpolation = cv2.INTER_NEAREST));
     cv2.imshow( "original im2", cv2.resize(orig_im[:,:,1],(300,300), interpolation = cv2.INTER_NEAREST));
-    cv2.imshow( "flow x direction image", cv2.resize(prd_flow[-1,:,:,0],(300,300), interpolation = cv2.INTER_NEAREST));
-    cv2.imshow( "flow y direction image", cv2.resize(prd_flow[-1,:,:,1],(300,300), interpolation = cv2.INTER_NEAREST));
+    cv2.imshow( "flow x direction image", cv2.resize(prd_flow[0,:,:,0],(300,300), interpolation = cv2.INTER_NEAREST));
+    cv2.imshow( "flow y direction image", cv2.resize(prd_flow[0,:,:,1],(300,300), interpolation = cv2.INTER_NEAREST));
     cv2.imshow( "flow prediction", cv2.resize(flow_im,(300,300), interpolation = cv2.INTER_NEAREST));
     cv2.imshow( "prediction im2", cv2.resize(pred_im,(300,300), interpolation = cv2.INTER_NEAREST));
     cv2.imshow( "real im2", cv2.resize(label_im,(300,300), interpolation = cv2.INTER_NEAREST));
     cv2.waitKey(0)
     cv2.destroyAllWindows()
-
-def save_flows(flow, save_flow_im_path, start, gs):
-    (n_data,_,_,_) = flow.shape
-    for idx in range(0,n_data):
-        cv2.imwrite(save_flow_im_path+str(start+idx)+'-global-step'+str(gs)+'.png',
-            cv2.resize(visualise_flow(flow[idx,:,:,:]), (300,300), interpolation = cv2.INTER_NEAREST))
 
 def visualise_flow(flow):
     [width, height, _] = flow.shape
@@ -117,13 +111,47 @@ class SIFN():
     def __init__(self):
         pass
 
-    def train_network(self, train_x, train_y, t = 1, hm_epochs = 100000, epsilon = 0.005, lambda1 = 0.00000005, batch_size = 16,
+    def save_flows(self, flow, save_flow_im_path, first_batch, gs):
+        (n_data,_,_,_) = flow.shape
+        if first_batch:
+            self.start_idx = 0
+        start = self.start_idx
+        for idx in range(0,n_data):
+            cv2.imwrite(save_flow_im_path+str(start+idx)+'-global-step'+str(gs)+'.png',
+                cv2.resize(visualise_flow(flow[idx,:,:,:]), (300,300), interpolation = cv2.INTER_NEAREST))
+        self.start_idx += n_data
+
+    def _dataset_pipeline(self, im1_filenames, im2_filenames, batch_size, im_width=128, im_height=128, y_filenames=None):
+        # Make a Dataset of file names including all the PNG images files in
+        # the relative image directory.
+        # filename_dataset_im1 = tf.data.Dataset.list_files(im1_pattern, shuffle=False)
+        filename_dataset_im1 = tf.data.Dataset.from_tensor_slices(im1_filenames)
+        # filename_dataset_im2 = tf.data.Dataset.list_files(im2_pattern, shuffle=False)
+        filename_dataset_im2 = tf.data.Dataset.from_tensor_slices(im2_filenames)
+        # Make a Dataset of image tensors by reading and decoding the files.
+        image_dataset_im1 = filename_dataset_im1.map(lambda x: tf.image.resize_images(tf.image.decode_png(tf.read_file(x), channels=1),(im_width, im_height)) / 255 )
+        image_dataset_im2 = filename_dataset_im2.map(lambda x: tf.image.resize_images(tf.image.decode_png(tf.read_file(x), channels=1),(im_width, im_height)) / 255 )
+        # zip images
+        if y_filenames != None:
+            filename_dataset_y = tf.data.Dataset.list_files(y_pattern, shuffle=False)
+            image_dataset_y = filename_dataset_y.map(lambda x: tf.decode_png(tf.read_file(x)))
+            image_dataset = tf.data.Dataset.zip((image_dataset_im1, image_dataset_im2, image_dataset_y))
+        else:
+            image_dataset = tf.data.Dataset.zip((image_dataset_im1, image_dataset_im2, image_dataset_im2))
+        #batch data points
+        image_dataset = image_dataset.batch(batch_size)
+
+        iterator = image_dataset.make_initializable_iterator()
+        return iterator#.get_next()
+
+    def train_network(self, im1_filenames, im2_filenames, im_width, im_height, y_filenames=None, t = 1, hm_epochs = 100000, epsilon = 0.005, lambda1 = 0.00000005, batch_size = 16,
     save_flow_im_path = 'ignore', save_step = 100, show_step=100, bool_show_stuff = False, load_model_path = 'ignore', save_model_path = 'ignore'):
-        [_, width_of_image, height_of_image, n_x] = train_x.shape
-        [_, width_of_image, height_of_image, n_y] = train_y.shape
         #placeholders
-        x = tf.placeholder('float', [None, width_of_image, height_of_image, n_x])
-        y = tf.placeholder('float', [None, width_of_image, height_of_image, n_y])
+        iterator = self._dataset_pipeline(im1_filenames, im2_filenames, batch_size, im_width=im_width, im_height=im_height)
+        im1, im2, y = iterator.get_next()
+        x = tf.concat((im1,im2), axis=3)
+        print(x.shape)
+        print(y.shape)
         global_step = tf.Variable(0, name='global_step', trainable=False)
         #estimate flow
         (flow1, flow2, flow3, flow4, flow5, flow6) = FLowNetSimple(x)
@@ -176,24 +204,26 @@ class SIFN():
             #training
             for epoch in range(hm_epochs):
                 epoch_loss = 0
-                i = 0
+                first_batch = True
                 start_t_epoch = time.time()
-                while (i < len(train_x)) & (i < len(train_y)):
-                    start = i
-                    end = i+batch_size
-                    start_t_batch = time.time()
-                    batch_x = np.array(train_x[start:end])
-                    batch_y = np.array(train_y[start:end])
-                    _, c, prd_flow, wrp_im, g_s, summ = sess.run([optimizer, cost, p_flow, p_image, global_step, summaries],
-                    feed_dict = {x: batch_x, y: batch_y})
-                    end_t_batch = time.time()
-                    writer.add_summary(summ, global_step=g_s)
-                    print('time for batch:',end_t_batch - start_t_batch)
-                    epoch_loss += c
-                    i += batch_size
+                sess.run(iterator.initializer)
+                while True:
+                    try:
+                        start_t_batch = time.time()
+                        batch_x, batch_y, _, c, prd_flow, wrp_im, g_s, summ = sess.run([x, y, optimizer, cost, p_flow, p_image, global_step, summaries])
+                        end_t_batch = time.time()
+                        writer.add_summary(summ, global_step=g_s)
+                        print('time for batch:',end_t_batch - start_t_batch)
+                        epoch_loss += c
 
-                    if(((epoch) % save_step) == 0) and (save_flow_im_path != 'ignore'):
-                        save_flows(prd_flow, save_flow_im_path, start, g_s)
+                        if(((epoch) % save_step) == 0) and (save_flow_im_path != 'ignore'):
+                            self.save_flows(prd_flow, save_flow_im_path, first_batch, g_s)
+
+                        if first_batch:
+                            first_batch = False
+                    except tf.errors.OutOfRangeError:
+                        print('End of Epoch')
+                        break
 
                 end_t_epoch = time.time()
                 print('Global Step:', g_s, 'Epoch:', epoch, '/', hm_epochs,

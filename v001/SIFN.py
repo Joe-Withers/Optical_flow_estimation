@@ -181,7 +181,7 @@ class SIFN():
         #optimise error
         optimizer = tf.train.AdamOptimizer().minimize(cost, global_step=global_step)
 
-        writer = tf.summary.FileWriter("/train/cost")
+        writer = tf.summary.FileWriter("./train/cost")
         summaries = tf.summary.merge_all()
         #run on GPU
         config = tf.ConfigProto(

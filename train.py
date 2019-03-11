@@ -3,7 +3,7 @@ from v001.SIFN import SIFN
 version = 'v001'
 
 #dataset info
-n_data = 10
+n_data = 22231
 im_width = 384
 im_height = 512
 # im_path = 'D:/Joe/Documents/University/Year 4/ResearchProject/My Code/data/SyntheticData-b_plain-o_textured-dof_2/train/'

@@ -1,0 +1,39 @@
+% !TEX root = ./Unserpervised_flow_estimation.tex
+
+\section{Related literature}
+
+\subsection{Traditional optical flow estimation (re-name)}
+In traditional gradient-based optical flow estimation, a common assumption is brightness consistency. The brightness consistency constraint, *eq*, can be used as a data driven error term in an optimization problem. However, this equation is underdetermined and therefore further constraints are required to estimate optical flow. *Horn and Schunck* impose the global smoothness of the flow as a regularization term, giving a global energy function seen in *eq*. *ref* uses a second order smoothness constraint... *include some extensions of horn and schunck*. These global energy functions can be minimized using continuous optimization methods such as gradient descent. Alternatively, these can be minimized using discrete optimization...*variation method* \\
+
+\subsection{Supervised CNN flow estimation}
+Convolutional neural networks are good at learning to extract and match important features from images...
+Recent works have seen CNN’s... \\
+In the field of optical flow, *FlowNet* introduced using CNN’s to predict optical flow estimation. *FlowNet* uses convolutional layers and pooling layers to extract features and then uses up-convolutional layers to output a dense optical flow estimation. This CNN architecture is trained end-to-end in a supervised learning environment, using ground-truth optical flows. For the purpose of training with ground-truth flow labels, *FlowNet* introduces a synthetic dataset 'synthetic chairs'.\\
+Following this, *DispNet* introduced another synthetic dataset used to train a CNN for real time disparity estimation. Extending the optical flow domain to scene flow, the CNN proposed in *DispNet* aims estimate scene flow by learning flow and disparity jointly.\\
+Further work… \\
+*D.Teney 2016*… \\
+*FlowNet2.0* stacks networks to incrementally predict optical flow…\\
+
+In a supervised training environment, CNN’s require large labelled datasets to learn optical flow estimation. Real world datasets with ground truth optical flow labels are difficult to obtain. In the case of *FlowNet, …*, they created synthetic datasets which they train on. Training on unrealistic datasets may impose an upper limit on the accuracy on the optical flow estimation on real data. \\
+*…* attempts to… \\
+Another approach is to use unsupervised learning.\\
+
+\subsection{Unsupervised CNN flow estimation}
+More recently we have seen works for unsupervised learning of optical flow using a CNN. \\
+*Yu. Harley 2016*… \\
+*A. Ahmidi 2016*… \\
+*Z.Ren 2017* uses *FlowNet* in an unsupervised learning domain. This paper uses a differentiable bilinear warping function to calculate the photometric error of the optical flow estimation. Also, a first order smoothness constraint is imposed on the estimated flow. This method allows for end-to-end training using backpropagation since the bilinear warping function is differentiable.\\
+Extending this, *UnFlow 2017* uses *FlowNet2.0* and considers occlusion in the loss function by estimating the flow in both directions and…\\
+Furthermore, *UnFlow 2017* imposes second order smoothness on the flow which is shown in *…* to give better results.\\
+*Lai 2017* uses an adversarial network in contrast to the brightness constancy error from warping with the estimated flow.\\
+These approaches, although currently not as good as the state-of-the-art supervised CNN learning have good potential for optical flow estimation going forward as they require no ground truth flow datasets. This also means that these approaches are not constrained by the implicit upper bound of performance from training on synthetic datasets.\\
+
+\subsection{stuff to fit in}
+penalty functions - charbonnier\\
+Challenges:\\
+occlusion\\
+over-smoothing\\
+large displacements\\
+outliers\\
+textureless\\
+rotation

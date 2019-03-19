@@ -65,7 +65,18 @@ def load_synthetic_chairs_image_filenames(im_path, n_data=100):
 def load_synthetic_chairs_flows(im_path, im_width=128, im_height=128, n_data=100):
     flows = np.zeros((n_data, im_width, im_height, 2))
     for i in range(0,n_data):
-        f_flow = im_path+'flow/'+str(i)+'-I1-I2.npy'
-        flows[i,:,:,:] = np.load(f_flow)
+        f_flow = im_path+('0'*(7-len(str(i))))+str(i)+'-flow_10.flo'
+        f = open(f_flow, 'rb')
+
+        header = f.read(4)
+        if header.decode("utf-8") != 'PIEH':
+            raise Exception('Flow file header does not contain PIEH')
+
+        width = np.fromfile(f, np.int32, 1).squeeze()
+        height = np.fromfile(f, np.int32, 1).squeeze()
+
+        flow = np.fromfile(f, np.float32, width * height * 2).reshape((height, width, 2))
+
+        flows[i,:,:,:] = cv2.resize(flow.astype(np.float32),(im_width, im_height))
 
     return flows

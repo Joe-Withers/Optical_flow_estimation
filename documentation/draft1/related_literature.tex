@@ -7,11 +7,11 @@ In traditional gradient-based optical flow estimation, a common assumption is br
 
 \subsection{Supervised CNN flow estimation}
 Convolutional neural networks are good at learning to extract and match important features from images...
-Recent works have seen CNN’s... \\
+Recent works have seen CNN’s used for pixel dense predictions in segmentation *ref*, and depth prediction *ref*... \\
 In the field of optical flow, *FlowNet* introduced using CNN’s to predict optical flow estimation. *FlowNet* uses convolutional layers and pooling layers to extract features and then uses up-convolutional layers to output a dense optical flow estimation. This CNN architecture is trained end-to-end in a supervised learning environment, using ground-truth optical flows. For the purpose of training with ground-truth flow labels, *FlowNet* introduces a synthetic dataset 'synthetic chairs'.\\
 Following this, *DispNet* introduced another synthetic dataset used to train a CNN for real time disparity estimation. Extending the optical flow domain to scene flow, the CNN proposed in *DispNet* aims estimate scene flow by learning flow and disparity jointly.\\
 Further work… \\
-*D.Teney 2016*… \\
+*D.Teney 2016* introduces a lightweight CNN that uses signal processing principles for image contrast, phase, rotation and texture invariance... \\
 *FlowNet2.0* stacks networks to incrementally predict optical flow…\\
 
 In a supervised training environment, CNN’s require large labelled datasets to learn optical flow estimation. Real world datasets with ground truth optical flow labels are difficult to obtain. In the case of *FlowNet, …*, they created synthetic datasets which they train on. Training on unrealistic datasets may impose an upper limit on the accuracy on the optical flow estimation on real data. \\
@@ -20,9 +20,9 @@ Another approach is to use unsupervised learning.\\
 
 \subsection{Unsupervised CNN flow estimation}
 More recently we have seen works for unsupervised learning of optical flow using a CNN. \\
-*Yu. Harley 2016*… \\
 *A. Ahmidi 2016*… \\
-*Z.Ren 2017* uses *FlowNet* in an unsupervised learning domain. This paper uses a differentiable bilinear warping function to calculate the photometric error of the optical flow estimation. Also, a first order smoothness constraint is imposed on the estimated flow. This method allows for end-to-end training using backpropagation since the bilinear warping function is differentiable.\\
+*Yu. Harley 2016* uses FlowNet Simple *ref* for its networks architecture. To train the network in an unsupervised setting, the photometric loss of the backward-warped-first-image and second image is used. This is done using a differential spatial transformer. This photometric   loss is calculated for multiple levels during the upconvolutional layers. Furthermore a first order smoothness constraint on the flow.\\
+Similarly, *Z.Ren 2017* uses *FlowNet* architecture in an unsupervised learning domain. This paper uses a differentiable bilinear warping function to calculate the photometric error of the optical flow estimation. Also, a first order smoothness constraint is imposed on the estimated flow. This method allows for end-to-end training using backpropagation since the bilinear warping function is differentiable.\\
 Extending this, *UnFlow 2017* uses *FlowNet2.0* and considers occlusion in the loss function by estimating the flow in both directions and…\\
 Furthermore, *UnFlow 2017* imposes second order smoothness on the flow which is shown in *…* to give better results.\\
 *Lai 2017* uses an adversarial network in contrast to the brightness constancy error from warping with the estimated flow.\\
@@ -31,9 +31,10 @@ These approaches, although currently not as good as the state-of-the-art supervi
 \subsection{stuff to fit in}
 penalty functions - charbonnier\\
 Challenges:\\
-occlusion\\
-over-smoothing\\
-large displacements\\
-outliers\\
-textureless\\
-rotation
+-occlusion\\
+-over-smoothing\\
+-large displacements\\
+-outliers\\
+-textureless\\
+-rotation\\
+CNN's much faster that variation methods.\\

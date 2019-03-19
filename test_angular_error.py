@@ -30,7 +30,7 @@ bool_show_stuff = True
 batch_size = 32
 #train model
 flow_estimator = SIFN()
-predicted_flows = flow_estimator.run_network(X, load_model_path, batch_size=batch_size, save_flow_im_path=dump_path)
+predicted_flows = flow_estimator.run_network_with_data(X, load_model_path, batch_size=batch_size, save_flow_im_path=dump_path)
 
 GT_flows = ds.load_my_synthetic_flows(im_path, n_data=n_data)
 

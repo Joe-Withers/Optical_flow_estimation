@@ -287,3 +287,51 @@ class SIFN():
             print('Time:', end_t_all - start_t_all, '\nAvg time per image pair:', (end_t_all - start_t_all)/len(flows))
 
             return flows
+
+    def run_network_with_data(self, test_x, load_model_path, batch_size = 32, save_flow_im_path = 'ignore'):
+        [n_ims, width_of_image, height_of_image, n_x] = test_x.shape
+        #placeholders
+        x = tf.placeholder('float', [None, width_of_image, height_of_image, n_x])
+        global_step = tf.Variable(0, name='global_step', trainable=False)
+        #estimate flow
+        (flow1, flow2, flow3, flow4, flow5, flow6) = FLowNetSimple(x)
+        p_flow = tf.image.resize_images(flow1, [width_of_image, height_of_image])
+
+        config = tf.ConfigProto(
+            device_count = {'GPU': 1}
+        )
+        with tf.Session(config=config) as sess:
+            #initialise the model randomly
+            print('initializing model')
+            sess.run(tf.global_variables_initializer())
+
+            # saver object to save the variables
+            saver = tf.train.Saver()
+            #load model from latest checkpoint
+            saver.restore(sess, tf.train.latest_checkpoint(load_model_path))
+            print('model loaded from:', load_model_path)
+
+            start_t_all = time.time()
+            #running
+            i = 0
+            while i < len(test_x):
+                start = i
+                end = i+batch_size
+                start_t_batch = time.time()
+                batch_x = np.array(test_x[start:end])
+                prd_flow, g_s = sess.run([p_flow, global_step],
+                feed_dict = {x: batch_x})
+                end_t_batch = time.time()
+                i += batch_size
+
+                if start == 0:
+                    flows = prd_flow
+                else:
+                    flows = np.concatenate((flows, prd_flow), axis=0)
+
+            end_t_all = time.time()
+            if(save_flow_im_path != 'ignore'):
+                self.save_flows(flows, save_flow_im_path, True, g_s)
+            print('Time:', end_t_all - start_t_all, '\nAvg time per image pair:', (end_t_all - start_t_all)/n_ims)
+
+            return flows

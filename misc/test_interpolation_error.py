@@ -2,18 +2,18 @@ import datasets as ds
 import numpy as np
 from v001.SIFN import SIFN
 version = 'v001'
-
+#***************************************TODO: check the warping logic (wrong way?)*****************************************************************************
 #dataset info
 n_data = 100
 im_width = 128
 im_height = 128
-im_path = 'D:/Joe/Documents/University/Year 4/ResearchProject/My Code/data/SyntheticData-b_plain-o_textured-dof_2/test/'
+im_path = './data/obj_texture/test/'
 #load data
 X, y = ds.load_my_synthetic_images(im_path, im_width=im_width, im_height=im_height, n_data=n_data)
 
 #feedback paths
-load_model_path = './'+version+'/training/'
-dump_path = 'D:/Joe/Documents/University/Year 4/ResearchProject/My Code/temp_analysis/'
+load_model_path = './'+version+'/training/obj_texture_sup/'
+dump_path = 'ignore'
 #feedback paras
 save_step = 30
 show_step = 10

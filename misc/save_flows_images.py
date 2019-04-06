@@ -12,13 +12,21 @@ def visualise_flow(flow):
     return bgr
 
 
-n_data = 350
-im_path = 'D:/Joe/Documents/University/Year 4/ResearchProject/My Code/data/FlyingChairs2/FlyingChairs2/FlyingChairs2/val/'
-save_flow_im_path = 'D:/Joe/Documents/University/Year 4/ResearchProject/My Code/data/FlyingChairs2/FlyingChairs2/FlyingChairs2/val/images/'
+n_data = 50
+im_path = './data/FlyingChairs2/train/'
+save_flow_im_path = './data/FlyingChairs2/train/images/'
 
+X = ds.load_synthetic_chairs_images(im_path, n_data=n_data)
 GT_flows = ds.load_synthetic_chairs_flows(im_path, n_data=n_data)
 
 (hm_data,_,_,_) = GT_flows.shape
 for idx in range(0,hm_data):
+    if show_stuff = True:
+        cv2.imshow( "im_1", cv2.resize(X[1,:,:,0],(300,300), interpolation = cv2.INTER_NEAREST));
+        cv2.imshow( "im_2", cv2.resize(X[1,:,:,1],(300,300), interpolation = cv2.INTER_NEAREST));
+        cv2.imshow( "flow_10", cv2.resize(visualise_flow(GT_flows[1,:,:,:]),(300,300), interpolation = cv2.INTER_NEAREST));
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
     cv2.imwrite(save_flow_im_path+str(idx)+'.png',
         cv2.resize(visualise_flow(GT_flows[idx,:,:,:]), (300,300), interpolation = cv2.INTER_NEAREST))

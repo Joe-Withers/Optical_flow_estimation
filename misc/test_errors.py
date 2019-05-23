@@ -20,17 +20,29 @@ def angular_error(flow_gt,flow):
     ae = np.arccos( (np.sum(f*f_gt, axis=2)) / ( np.sqrt(np.sum(f**2, axis=2)) * np.sqrt(np.sum(f_gt**2, axis=2)) ) )
     return ae
 
+def load_dataset_filenames(im_path, dataset_name, n_data = 10):
+    #load data
+    if dataset_name=='flying_chairs':
+        im1_filenames,im2_filenames = ds.load_synthetic_chairs_image_filenames(im_path, n_data=n_data)
+        y_filenames = ds.load_synthetic_chairs_flows_filenames(im_path, n_data=n_data)
+    else:
+        im1_filenames,im2_filenames = ds.load_my_synthetic_image_filenames(im_path, n_data=n_data)
+        y_filenames = ds.load_my_synthetic_flows_filenames(im_path, n_data=n_data)
+    return im1_filenames, im2_filenames, y_filenames
+
 models = ['sup_5e-8','sup_5e-10','sup_0','unsup_5e-6','unsup_5e-8','unsup_5e-10','unsup_0']
 models = ['unsup_5e-6']
 dataset_name = 'flying_chairs'
 model_dataset_name = 'flying_chairs'
 
-n_data = 1000
-im_path = './data/'+dataset_name+'/train/'
+n_data = 100
+im_path = './data/FlyingChairs2/train/'
+
+im1_filenames, im2_filenames, y_filenames = load_dataset_filenames(im_path, dataset_name, n_data = n_data)
 
 #load data
-X = ds.load_my_synthetic_images(im_path, n_data=n_data)
-GT_flows = ds.load_my_synthetic_flows(im_path, n_data=n_data)
+# X = ds.load_my_synthetic_images(im_path, n_data=n_data)
+# GT_flows = ds.load_my_synthetic_flows(im_path, n_data=n_data)
 # X = ds.load_synthetic_chairs_images(im_path, n_data=n_data)
 # GT_flows = ds.load_synthetic_chairs_flows(im_path, n_data=n_data)
 AAE = dict()
@@ -50,8 +62,9 @@ for model in models:
         #train model
         flow_estimator = UnSupFlowNet()
         tf.reset_default_graph()
-        predicted_flows = flow_estimator.run_network_with_data(X, load_model_path, batch_size=batch_size, save_flow_im_path=dump_path)
-
+        # predicted_flows = flow_estimator.run_network_with_data(X, load_model_path, batch_size=batch_size, save_flow_im_path=dump_path)
+        ee, ae = flow_estimator.run_network(im1_filenames, im2_filenames, load_model_path, y=y_filenames ,dataset_name=dataset_name, batch_size = batch_size, save_flow_im_path = dump_path)
+        print(predicted_flows.shape)
         [a1,b1,c1,d1] = GT_flows.shape
         [a2,b2,c2,d2] = predicted_flows.shape
         assert a1==a2

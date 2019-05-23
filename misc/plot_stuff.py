@@ -4,7 +4,7 @@ from scipy.ndimage.filters import gaussian_filter
 import numpy as np
 
 SAVE_FIG = True
-dir = './v001/training/kaggle/'
+# dir = './v001/training/kaggle/'
 # filename_dict = {'obj_texture_sup':['_1','_2'],
 #             'obj_texture_unsup_5e-8':['_1','_2'],
 #             'obj_texture_unsup_5e-10':['_1'],
@@ -18,11 +18,11 @@ dir = './v001/training/kaggle/'
 #             'flying_chairs_unsup_5e-10_32':[''],
 #             'flying_chairs_unsup_0_32':['']}
 # title_postfix = '\non the flying chairs dataset'
-filename_dict = {'affine_sup_5e-8_16':[''],
-            'affine_unsup_5e-8_16':[''],
-            'affine_unsup_5e-10_16':[''],
-            'affine_unsup_0_16':['']}
-title_postfix = '\non the affine transformation dataset'
+# filename_dict = {'affine_sup_5e-8_16':[''],
+#             'affine_unsup_5e-8_16':[''],
+#             'affine_unsup_5e-10_16':[''],
+#             'affine_unsup_0_16':['']}
+# title_postfix = '\non the affine transformation dataset'
 # filename_dict = {'obj_texture_sup':[''],
 #             'obj_texture_unsup_5e-8_16':[''],
 #             'obj_texture_unsup_5e-10_16':[''],
@@ -33,8 +33,35 @@ title_postfix = '\non the affine transformation dataset'
 #             'no_texture_unsup_5e-10_16':[''],
 #             'no_texture_unsup_0_16':['']}
 # title_postfix = '\non the synthetic no texture dataset'
+dir = './v002/training/kaggle/flying_chairs/'
+title_postfix = '\non the flying chairs dataset'
+filename_dict = {'sup_5e-8':[''],
+                'sup_5e-10':[''],
+                'sup_0':[''],
+                'unsup_5e-4':[''],
+                'unsup_5e-4(occ_sup_5e-10)':[''],
+                'unsup_5e-4(occ_unsup_5e-6)':[''],
+                'unsup_5e-6':[''],
+                'unsup_5e-6(occ_sup_5e-10)':[''],
+                'unsup_5e-6(occ_unsup_5e-6)':[''],
+                'unsup_5e-8':[''],
+                'unsup_5e-10':[''],
+                'unsup_0':['']}
+filename_dict2 = {'sup_5e-8':[''],
+                'sup_5e-10':[''],
+                'sup_0':[''],
+                'unsup_5e-4':[''],
+                'unsup_5e-4(*1)':[''],
+                'unsup_5e-4(*2)':[''],
+                'unsup_5e-6':[''],
+                'unsup_5e-6(*1)':[''],
+                'unsup_5e-6(*2)':[''],
+                'unsup_5e-8':[''],
+                'unsup_5e-10':[''],
+                'unsup_0':['']}
 
-legend = ['Supervised: λ = 5e-8','Unsupervised: λ = 5e-8','Unsupervised: λ = 5e-10','Unsupervised: λ = 0']
+legend = filename_dict2.keys()
+# legend = ['Supervised: λ = 5e-8','Unsupervised: λ = 5e-8','Unsupervised: λ = 5e-10','Unsupervised: λ = 0']
 loss_dict = dict()
 ploss_dict = dict()
 floss_dict = dict()
@@ -70,12 +97,14 @@ def batch_to_epoch(l_dict, batches_per_epoch):
 # ploss_dict = batch_to_epoch(ploss_dict, bpe)
 # floss_dict = batch_to_epoch(floss_dict, bpe)
 
+blur=100
+
 #plot loss
 for k in loss_dict.keys():
-    plt.plot(gaussian_filter(loss_dict[k], sigma=10))
+    plt.plot(gaussian_filter(loss_dict[k], sigma=blur))
 plt.title('Blurred loss learning curve'+title_postfix)
 plt.ylabel('loss')
-plt.xlabel('Steps (batch size = 32)')
+plt.xlabel('Steps (batch size = 16)')
 plt.legend(legend)
 if SAVE_FIG:
     plt.savefig(dir+'loss.png')
@@ -83,10 +112,10 @@ plt.show()
 
 #plot photometric loss
 for k in ploss_dict.keys():
-    plt.plot(gaussian_filter(ploss_dict[k], sigma=10))
+    plt.plot(gaussian_filter(ploss_dict[k], sigma=blur))
 plt.title('Blurred photometric loss learning curve'+title_postfix)
 plt.ylabel('Photometric loss')
-plt.xlabel('Steps (batch size = 32)')
+plt.xlabel('Steps (batch size = 16)')
 plt.legend(legend)
 if SAVE_FIG:
     plt.savefig(dir+'ploss.png')
@@ -94,10 +123,10 @@ plt.show()
 
 #plot flow loss
 for k in floss_dict.keys():
-    plt.plot(gaussian_filter(floss_dict[k], sigma=10))
+    plt.plot(gaussian_filter(floss_dict[k], sigma=blur))
 plt.title('Blurred flow loss learning curve'+title_postfix)
 plt.ylabel('Flow loss')
-plt.xlabel('Steps (batch size = 32)')
+plt.xlabel('Steps (batch size = 16)')
 plt.legend(legend)
 if SAVE_FIG:
     plt.savefig(dir+'floss.png')

@@ -1,4 +1,6 @@
-import datasets as ds
+import sys
+sys.path.append('./')
+import v002.datasets as ds
 import cv2
 import numpy as np
 def visualise_flow(flow):
@@ -13,18 +15,19 @@ def visualise_flow(flow):
 
 
 n_data = 50
-im_path = './data/FlyingChairs2/train/'
-save_flow_im_path = './data/FlyingChairs2/train/images/'
+im_path = './data/FlyingChairs2/val/'
+save_flow_im_path = './data/FlyingChairs2/val/images/'
 
 X = ds.load_synthetic_chairs_images(im_path, n_data=n_data)
 GT_flows = ds.load_synthetic_chairs_flows(im_path, n_data=n_data)
 
 (hm_data,_,_,_) = GT_flows.shape
+show_stuff = False
 for idx in range(0,hm_data):
-    if show_stuff = True:
+    if show_stuff is True:
         cv2.imshow( "im_1", cv2.resize(X[1,:,:,0],(300,300), interpolation = cv2.INTER_NEAREST));
         cv2.imshow( "im_2", cv2.resize(X[1,:,:,1],(300,300), interpolation = cv2.INTER_NEAREST));
-        cv2.imshow( "flow_10", cv2.resize(visualise_flow(GT_flows[1,:,:,:]),(300,300), interpolation = cv2.INTER_NEAREST));
+        cv2.imshow( "flow_01", cv2.resize(visualise_flow(GT_flows[1,:,:,:]),(300,300), interpolation = cv2.INTER_NEAREST));
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 

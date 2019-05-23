@@ -1,21 +1,27 @@
-import datasets as ds
+import sys
+sys.path.append('./')
 import numpy as np
-from v001.SIFN import SIFN
-version = 'v001'
+version = 'v002'
+
+if version=='v001':
+    import v001.datasets as ds
+    from v001.UnSupFlowNet import UnSupFlowNet
+
+if version=='v002':
+    import v002.datasets as ds
+    from v002.UnSupFlowNet import UnSupFlowNet
 
 #dataset info
-n_data = 100
-im_width = 128
-im_height = 128
-# im_path = 'D:/Joe/Documents/University/Year 4/ResearchProject/My Code/data/SyntheticData-b_plain-o_textured-dof_2/test/'
-im_path = './data/obj_texture/test/'
+n_data = 1000
+im_path = './data/no_texture/train/'
 #load data
-X, y = ds.load_my_synthetic_images(im_path, im_width=im_width, im_height=im_height, n_data=n_data)
-# X, y = ds.load_synthetic_chairs_imags(im_path, n_data=n_data)
-
+X = ds.load_my_synthetic_images(im_path, n_data=n_data)
+GT_flows = ds.load_my_synthetic_flows(im_path, n_data=n_data)
+# X = ds.load_synthetic_chairs_images(im_path, n_data=n_data)
+# GT_flows = ds.load_synthetic_chairs_flows(im_path, n_data=n_data)
 
 #feedback paths
-load_model_path = './'+version+'/training/obj_texture_sup/'
+load_model_path = './'+version+'/training/kaggle/no_texture/sup_5e-8/'
 dump_path = 'ignore'
 #feedback paras
 save_step = 30
@@ -24,13 +30,10 @@ bool_show_stuff = False
 #training info
 batch_size = 32
 #train model
-flow_estimator = SIFN()
+flow_estimator = UnSupFlowNet()
 predicted_flows = flow_estimator.run_network_with_data(X, load_model_path, batch_size=batch_size, save_flow_im_path=dump_path)
-
-GT_flows = ds.load_my_synthetic_flows(im_path, n_data=n_data)
 
 assert len(GT_flows)==len(predicted_flows)
 EE = [np.mean(np.sqrt(GT_flows[i,:,:,:]**2+predicted_flows[i,:,:,:]**2)) for i in range(len(predicted_flows))]
-
 
 print('Avg endpoint error',np.mean(EE))

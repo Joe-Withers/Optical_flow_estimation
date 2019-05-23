@@ -1,31 +1,56 @@
 """given GT flow and 2 images how accurate is the warp function"""
-import datasets as ds
+import sys
+sys.path.append('./')
 import numpy as np
 import tensorflow as tf
 import cv2
-from v001.SIFN import warping_error, visualise_flow
-version = 'v001'
+version = 'v002'
+
+if version=='v001':
+    import v001.datasets as ds
+    from v001.UnSupFlowNet import warping_error, visualise_flow
+
+if version=='v002':
+    import v002.datasets as ds
+    from v002.UnSupFlowNet import warping_error, visualise_flow
+
 
 #dataset info
-n_data = 100
-im_width = 128
-im_height = 128
-im_path = './data/obj_texture/test/'
-#load data
-X = ds.load_my_synthetic_images(im_path, im_width=im_width, im_height=im_height, n_data=n_data)
-GT_flows = ds.load_my_synthetic_flows(im_path, n_data=n_data)
+# n_datas = [100,100,100,100]
+# im_paths = ['./data/full_texture/test/','./data/obj_texture/test/','./data/no_texture/test/','./data/occlusion/test/']
+# prefixes = ['full_texture','obj_texture','no_texture','occlusion']
+n_datas = [1000]
+im_paths = ['./data/FlyingChairs2/train/']
+prefixes = ['flying_chairs']
+dump_path = './temp_analysis/'
+for im_path, prefix, n_data in zip(im_paths, prefixes, n_datas):
+    #load data
+    # X = ds.load_my_synthetic_images(im_path, n_data=n_data)
+    # GT_flows = ds.load_my_synthetic_flows(im_path, n_data=n_data)
+    X = ds.load_synthetic_chairs_images(im_path, n_data=n_data)
+    GT_flows = ds.load_synthetic_chairs_flows(im_path, n_data=n_data)
 
-im1 = tf.placeholder('float', [None, im_width, im_height])
-im2 = tf.placeholder('float', [None, im_width, im_height])
-flowt = tf.placeholder('float', [None, im_width, im_height, 2])
-warping_err, warped_im = warping_error(im2, im1, flowt, 1)
-with tf.Session() as sess:
-    WE, WI = sess.run([warping_err, warped_im], feed_dict = {im1: X[:,:,:,0], im2: X[:,:,:,1], flowt: -GT_flows})
+    [_, im_width, im_height, _] = X.shape
+    [_, f_width, f_height, _] = GT_flows.shape
+    print(X.shape)
+    print(GT_flows.shape)
+    assert im_width==f_width and im_height==f_height
+    im1 = tf.placeholder('float', [None, im_width, im_height])
+    im2 = tf.placeholder('float', [None, im_width, im_height])
+    flowt = tf.placeholder('float', [None, f_width, f_height, 2])
+    warping_err, warped_im = warping_error(im2, im1, -flowt)
+    with tf.Session() as sess:
+        WE, WI = sess.run([warping_err, warped_im], feed_dict = {im1: X[:,:,:,0], im2: X[:,:,:,1], flowt: GT_flows})
 
-i = 0
-cv2.imshow('im 1', cv2.resize(X[i,:,:,0],(300,300)))
-cv2.imshow('im 2', cv2.resize(X[i,:,:,1],(300,300)))
-cv2.imshow('flow', cv2.resize(visualise_flow(-GT_flows[i,:,:,:]),(300,300)))
-cv2.imshow('warped im', cv2.resize(WI[i,:,:,:],(300,300)))
-cv2.waitKey(0)
-print('Avg warping function error',WE)
+    for i in range(0,10):
+        image1 = X[i,:,:,0]
+        image2 = X[i,:,:,1]
+        w_image1 = WI[i,:,:,:]
+        print(image1.shape)
+        print(image2.shape)
+        print(w_image1.shape)
+        cv2.imwrite(dump_path+prefix+str(i)+'im_1.png', np.multiply(image1,255))
+        cv2.imwrite(dump_path+prefix+str(i)+'im_2.png', np.multiply(image2,255))
+        cv2.imwrite(dump_path+prefix+str(i)+'flow.png', visualise_flow(GT_flows[i,:,:,:]))
+        cv2.imwrite(dump_path+prefix+str(i)+'warped_im.png', np.multiply(w_image1,255))
+    print(prefix,': Avg warping function error',WE)

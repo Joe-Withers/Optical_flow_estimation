@@ -1,4 +1,4 @@
-# Research-Project
+# Unsupervised CNN for optical flow estimation
 
 Folders v001...vXXX contain version XXX of the flow estimation module and the dataset module for reading the data in for that version.
 
